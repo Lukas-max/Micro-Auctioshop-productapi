@@ -2,6 +2,7 @@ package luke.auctioshopproductapi.product.service;
 
 import luke.auctioshopproductapi.product.model.Product;
 import luke.auctioshopproductapi.product.model.ProductRequest;
+import luke.auctioshopproductapi.product.model.ProductStock;
 import luke.auctioshopproductapi.productCategory.model.ProductCategory;
 import luke.auctioshopproductapi.productCategory.service.ProductCategoryRepository;
 import org.springframework.core.io.ClassPathResource;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ProductServiceImpl implements ProductService{
@@ -28,11 +30,20 @@ public class ProductServiceImpl implements ProductService{
         this.productRepository = productRepository;
     }
 
+    /**
+     *
+     * @return page of all Products.
+     */
     @Override
     public Page<Product> findAll(Pageable pageable) {
         return productRepository.findAll(pageable);
     }
 
+    /**
+     *
+     * @param id Product id
+     * @return Product by it's ID.
+     */
     @Override
     public Product getProductById(Long id){
         return productRepository.findById(id)
@@ -40,16 +51,28 @@ public class ProductServiceImpl implements ProductService{
                         "Nie znaleziono produktu o Id: " + id));
     }
 
+    /**
+     *
+     * @return a Page of Products selected by the ProductCategory Id. So it will return all the products in a category.
+     * Like games category or electronics category.
+     */
     @Override
     public Page<Product> getProductsByProductCategoryId(Long categoryId, Pageable pageable) {
         return productRepository.findProductsByProductCategoryId(categoryId, pageable);
     }
 
+    /**
+     *
+     * @return a page of products selected by inserted name. Will return the products that contain the written phrase.
+     */
     @Override
     public Page<Product> getProductsByProductName(String name, Pageable pageable) {
         return productRepository.findByNameContainsIgnoreCase(name, pageable);
     }
 
+    /**
+     * Complete deletion of a product from the database. ProductCategory is untouched.
+     */
     @Override
     public void deleteProduct(Long id){
         Optional<Product> optionalProduct = productRepository.findById(id);
@@ -59,6 +82,11 @@ public class ProductServiceImpl implements ProductService{
         productRepository.deleteById(id);
     }
 
+    /**
+     * This will persist the added by the administrator product.
+     * @param productRequest is a DTO class that is then mapped to Product class.
+     * @return The saved product.
+     */
     @Override
     public Product persistProduct(ProductRequest productRequest) throws IOException {
         Product product = formatProduct(productRequest);
@@ -91,6 +119,21 @@ public class ProductServiceImpl implements ProductService{
                     product.getProductCategory());
         }
         return product;
+    }
+
+    /**
+     * This method patches the Product units in stock, or active field. This happens when the customer buys products
+     * and this method is called to decrease the stock levels.
+     */
+    @Override
+    public void updateProductStock(Set<ProductStock> productStock) {
+        if (productStock.size() == 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Nie znaleziono produktów w wysłanym zbiorze.");
+
+        productStock.forEach(prod -> productRepository.setStockAfterBuy(
+                prod.getProductId(),
+                prod.isActive(),
+                prod.getUnitsInStock()));
     }
 
     /**
@@ -134,10 +177,13 @@ public class ProductServiceImpl implements ProductService{
                 .build();
     }
 
+    /**
+     * Product is in @ManyToOne relationship with ProductCategory.
+     */
     private ProductCategory getProductCategory(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not fetch product category from database."));
+                        new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Could not fetch product category from database."));
     }
 
     /**

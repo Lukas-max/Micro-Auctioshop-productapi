@@ -2,6 +2,7 @@ package luke.auctioshopproductapi.product;
 
 import luke.auctioshopproductapi.product.model.Product;
 import luke.auctioshopproductapi.product.model.ProductRequest;
+import luke.auctioshopproductapi.product.model.ProductStock;
 import luke.auctioshopproductapi.product.service.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +15,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Set;
 
 
 @RestController
@@ -89,5 +91,12 @@ public class ProductController {
 
         Product product = productService.updateProduct(productRequest);
         return ResponseEntity.accepted().body(product);
+    }
+
+    @PutMapping("/stock")
+    public ResponseEntity<?> updateProductStock(@RequestBody Set<ProductStock> productStock){
+        productService.updateProductStock(productStock);
+
+        return ResponseEntity.ok().build();
     }
 }

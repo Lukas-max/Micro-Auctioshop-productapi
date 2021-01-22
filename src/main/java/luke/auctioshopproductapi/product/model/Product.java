@@ -16,7 +16,8 @@ import java.util.Objects;
 @NamedQueries({
         @NamedQuery(name = "Product.saveProductWithoutImage",
                 query = "UPDATE Product p " +
-                        "SET p.sku = :sku, p.name = :name, " +
+                        "SET p.sku = :sku, " +
+                        "p.name = :name, " +
                         "p.description = :description, " +
                         "p.unitPrice = :unitPrice, " +
                         "p.active = :active, " +
@@ -24,7 +25,10 @@ import java.util.Objects;
                         "p.dateTimeCreated = :dateTimeCreated, " +
                         "p.dateTimeUpdated = :dateTimeUpdated, " +
                         "p.productCategory = :productCategory " +
-                        "WHERE p.productId = :productId")
+                        "WHERE p.productId = :productId"),
+        @NamedQuery(name = "Product.setStockAfterBuy",
+        query = "UPDATE Product p " +
+                "SET p.active = :active, p.unitsInStock = :unitsInStock WHERE p.productId = :productId")
 })
 public class Product implements Serializable {
 
