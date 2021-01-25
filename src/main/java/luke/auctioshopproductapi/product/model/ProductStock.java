@@ -11,6 +11,8 @@ public class ProductStock {
     public ProductStock() {
     }
 
+
+
     public ProductStock(Product product) {
         this.productId = product.getProductId();
         this.active = product.isActive();

@@ -77,7 +77,7 @@ public class ProductServiceImpl implements ProductService{
     public void deleteProduct(Long id){
         Optional<Product> optionalProduct = productRepository.findById(id);
         if (optionalProduct.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found product with id: " + id);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nie znaleziono produktu o Id: " + id);
 
         productRepository.deleteById(id);
     }
@@ -130,7 +130,7 @@ public class ProductServiceImpl implements ProductService{
         if (productStock.size() == 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Nie znaleziono produktów w wysłanym zbiorze.");
 
-        productStock.forEach(prod -> productRepository.setStockAfterBuy(
+        productStock.forEach(prod -> productRepository.patchStockAfterBuy(
                 prod.getProductId(),
                 prod.isActive(),
                 prod.getUnitsInStock()));

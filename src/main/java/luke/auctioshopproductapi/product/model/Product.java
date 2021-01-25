@@ -26,7 +26,7 @@ import java.util.Objects;
                         "p.dateTimeUpdated = :dateTimeUpdated, " +
                         "p.productCategory = :productCategory " +
                         "WHERE p.productId = :productId"),
-        @NamedQuery(name = "Product.setStockAfterBuy",
+        @NamedQuery(name = "Product.patchStockAfterBuy",
         query = "UPDATE Product p " +
                 "SET p.active = :active, p.unitsInStock = :unitsInStock WHERE p.productId = :productId")
 })

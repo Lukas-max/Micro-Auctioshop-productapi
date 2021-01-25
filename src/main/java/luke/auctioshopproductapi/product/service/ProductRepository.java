@@ -39,8 +39,8 @@ public interface ProductRepository extends PagingAndSortingRepository<Product, L
                                  @Param("productCategory") ProductCategory productCategory);
 
     @Modifying
-    @Query(name = "Product.setStockAfterBuy")
-    void setStockAfterBuy(@Param("productId") Long productId,
-                          @Param("active") boolean active,
-                          @Param("unitsInStock") int unitsInStock);
+    @Query(name = "Product.patchStockAfterBuy")
+    void patchStockAfterBuy(@Param("productId") Long productId,
+                            @Param("active") boolean active,
+                            @Param("unitsInStock") int unitsInStock);
 }

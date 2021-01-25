@@ -2,6 +2,7 @@ package luke.auctioshopproductapi.product.service;
 
 import luke.auctioshopproductapi.product.model.Product;
 import luke.auctioshopproductapi.product.model.ProductRequest;
+import luke.auctioshopproductapi.product.model.ProductStock;
 import luke.auctioshopproductapi.productCategory.model.ProductCategory;
 import luke.auctioshopproductapi.productCategory.service.ProductCategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,12 +13,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -39,6 +44,42 @@ class ProductServiceImplTest {
     @BeforeEach
     public void setupMocks(){
         MockitoAnnotations.openMocks(this);
+    }
+
+    /**
+     * getProductById(Long id) should throw an exception if repository will return an empty Optional.
+     */
+    @Test
+    void getProductByIdShouldThrowException(){
+        //given
+        Long id = 10L;
+        given(productRepository.findById(id)).willReturn(Optional.empty());
+
+        //when
+        //then
+        ResponseStatusException e = assertThrows(ResponseStatusException.class,
+                () -> productServiceImpl.getProductById(id));
+
+        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(e.getReason(), equalTo("Nie znaleziono produktu o Id: " + id));
+    }
+
+    /**
+     * deleteProduct(Long id) should throw an exception if repository will return an empty Optional.
+     */
+    @Test
+    void deleteProductShouldThrowException(){
+        //given
+        Long id = 10L;
+        given(productRepository.findById(id)).willReturn(Optional.empty());
+
+        //when
+        //then
+        ResponseStatusException e = assertThrows(ResponseStatusException.class,
+                () -> productServiceImpl.deleteProduct(id));
+
+        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(e.getReason(), equalTo("Nie znaleziono produktu o Id: " + id));
     }
 
     /**
@@ -125,6 +166,48 @@ class ProductServiceImplTest {
                 () -> assertThat(productCategoryCaptor.getValue().getCategoryName(), is(equalTo("Gry"))),
                 () -> assertThat(productCategoryCaptor.getValue().getCategoryName(), is(not(equalTo("Elektronika"))))
         );
+    }
+
+    /**
+     * Tests updateProductStock with ArgumentCaptor's.
+     */
+    @Test
+    void updateProductStockTest(){
+        //given
+        Set<ProductStock> productStock = getProductStock();
+        ArgumentCaptor<Long> idCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Boolean> activeCaptor = ArgumentCaptor.forClass(Boolean.class);
+        ArgumentCaptor<Integer> unitsInStockCaptor = ArgumentCaptor.forClass(Integer.class);
+
+        //when
+        productServiceImpl.updateProductStock(productStock);
+
+        //then
+        then(productRepository).should(times(1))
+                .patchStockAfterBuy(idCaptor.capture(), activeCaptor.capture(), unitsInStockCaptor.capture());
+
+        assertAll(
+                () -> assertThat(idCaptor.getValue(), equalTo(10L)),
+                () -> assertThat(activeCaptor.getValue(), equalTo(true)),
+                () -> assertThat(unitsInStockCaptor.getValue(), equalTo(12))
+        );
+    }
+
+    /**
+     * Tests updateProductStock to throw the exception if the set is empty.
+     */
+    @Test
+    void updateProductStockShouldThrowException(){
+        //given
+        Set<ProductStock> productStock = new HashSet<>();
+
+        //when
+        //then
+        ResponseStatusException e = assertThrows(ResponseStatusException.class,
+                () -> productServiceImpl.updateProductStock(productStock));
+
+        assertThat(e.getStatus(), is(HttpStatus.BAD_REQUEST));
+        assertThat(e.getReason(), equalTo("Nie znaleziono produktów w wysłanym zbiorze."));
     }
 
     /**
@@ -362,6 +445,18 @@ class ProductServiceImplTest {
         categoryGames.setCategoryName("Gry");
         categoryGames.setProductCategoryId(1L);
         return Optional.of(categoryGames);
+    }
+
+    /**
+     * This method created a set of ProductStock used in updateProductStock method.
+     */
+    private Set<ProductStock> getProductStock(){
+        ProductStock stock = new ProductStock();
+        stock.setProductId(10L);
+        stock.setActive(true);
+        stock.setUnitsInStock(12);
+
+        return Set.of(stock);
     }
 
     /**
