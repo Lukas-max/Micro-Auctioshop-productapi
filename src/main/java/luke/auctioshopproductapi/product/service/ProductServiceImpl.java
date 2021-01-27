@@ -58,7 +58,9 @@ public class ProductServiceImpl implements ProductService{
      */
     @Override
     public Page<Product> getProductsByProductCategoryId(Long categoryId, Pageable pageable) {
-        return productRepository.findProductsByProductCategoryId(categoryId, pageable);
+        return productRepository.findProductsByProductCategoryId(categoryId, pageable)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Nie znaleziono produktów o wskazanej kategorii"));
     }
 
     /**
